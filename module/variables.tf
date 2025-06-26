@@ -28,11 +28,6 @@ variable "github_organization_billing_email" {
   description = "Required. The billing email of the GitHub Organization where resources will be created."
 }
 
-variable "github_organization_admins" {
-  type        = list(string)
-  description = "Required. The admins of the GitHub Organization where resources will be created."
-}
-
 variable "github_organization_company" {
   type        = string
   description = "Optional. The company of the GitHub Organization where resources will be created."
@@ -129,6 +124,8 @@ variable "github_organization_members_can_fork_private_repositories" {
   default     = false
 }
 
+# TODO: Fix this organization-level vs repository-level setting.
+# tflint-ignore: terraform_unused_declarations
 variable "github_organization_web_commit_signoff_required" {
   type        = bool
   description = "Optional. Whether web commit signoff is required."
