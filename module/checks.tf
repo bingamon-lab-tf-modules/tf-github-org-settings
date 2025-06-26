@@ -206,7 +206,7 @@ Invalid conditions in organization ruleset configurations.
 
 Organization rulesets with invalid conditions: ${join(", ", [
     for ruleset in var.github_organization_rulesets :
-    "${ruleset.name}" if !(
+    ruleset.name if !(
       ruleset.conditions == null || (
         ruleset.conditions.ref_name != null &&
         ruleset.conditions.ref_name.include != null &&
