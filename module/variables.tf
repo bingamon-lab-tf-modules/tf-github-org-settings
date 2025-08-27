@@ -173,108 +173,109 @@ variable "github_organization_rulesets" {
   type = list(object({
     # Required fields
     name        = string
-    enforcement = string # disabled, active, evaluate
+    enforcement = string # disabled, active, evaluate (evaluate only supported for organization owners)
     target      = string # branch, tag
 
-    # Rules block (required)
+    # Rules block (required) - Rules within the ruleset
     rules = object({
       # Branch/Tag protection rules
-      creation                = optional(bool)
-      deletion                = optional(bool)
-      non_fast_forward        = optional(bool)
-      required_linear_history = optional(bool)
-      required_signatures     = optional(bool)
-      update                  = optional(bool)
+      creation                = optional(bool) # Only allow users with bypass permission to create matching refs
+      deletion                = optional(bool) # Only allow users with bypass permissions to delete matching refs
+      non_fast_forward        = optional(bool) # Prevent users with push access from force pushing to branches
+      required_linear_history = optional(bool) # Prevent merge commits from being pushed to matching branches
+      required_signatures     = optional(bool) # Commits pushed to matching branches must have verified signatures
+      update                  = optional(bool) # Only allow users with bypass permission to update matching refs
 
-      # Pull request rules
+      # Pull request rules - Require all commits be made to a non-target branch and submitted via a pull request before they can be merged
       pull_request = optional(object({
-        dismiss_stale_reviews_on_push     = optional(bool)
-        require_code_owner_review         = optional(bool)
-        require_last_push_approval        = optional(bool)
-        required_approving_review_count   = optional(number)
-        required_review_thread_resolution = optional(bool)
+        dismiss_stale_reviews_on_push     = optional(bool)   # New, reviewable commits pushed will dismiss previous pull request review approvals
+        require_code_owner_review         = optional(bool)   # Require an approving review in pull requests that modify files that have a designated code owner
+        require_last_push_approval        = optional(bool)   # Whether the most recent reviewable push must be approved by someone other than the person who pushed it
+        required_approving_review_count   = optional(number) # The number of approving reviews that are required before a pull request can be merged
+        required_review_thread_resolution = optional(bool)   # All conversations on code must be resolved before a pull request can be merged
       }))
 
-      # Status check rules
+      # Status check rules - Choose which status checks must pass before branches can be merged into a branch that matches this rule
       required_status_checks = optional(object({
-        strict_required_status_checks_policy = optional(bool)
-        required_check = optional(list(object({
-          context        = string
-          integration_id = optional(number)
-        })))
+        strict_required_status_checks_policy = optional(bool) # Whether pull requests targeting a matching branch must be tested with the latest code
+        required_check = list(object({
+          context        = string           # The status check context name that must be present on the commit
+          integration_id = optional(number) # The optional integration ID that this status check must originate from
+        }))
       }))
 
-      # Required workflows rules
+      # Required workflows rules - Define which Actions workflows must pass before changes can be merged into a branch matching the rule
       required_workflows = optional(object({
         required_workflow = list(object({
-          repository_id = number
-          path          = string
-          ref           = optional(string)
+          repository_id = number           # The ID of the repository. Names, full names and repository URLs are not supported
+          path          = string           # The path to the YAML definition file of the workflow
+          ref           = optional(string) # The optional ref from which to fetch the workflow
         }))
       }))
 
-      # Code scanning rules
+      # Code scanning rules - Define which tools must provide code scanning results before the reference is updated
       required_code_scanning = optional(object({
         required_code_scanning_tool = list(object({
-          alerts_threshold          = string # none, errors, errors_and_warnings, all
-          security_alerts_threshold = string # none, critical, high_or_higher, medium_or_higher, all
-          tool                      = string
+          alerts_threshold          = string # none, errors, errors_and_warnings, all - The severity level at which code scanning results that raise alerts block a reference update
+          security_alerts_threshold = string # none, critical, high_or_higher, medium_or_higher, all - The severity level at which code scanning results that raise security alerts block a reference update
+          tool                      = string # The name of a code scanning tool
         }))
       }))
 
-      # Pattern rules (Enterprise only)
+      # Pattern rules (Enterprise only) - These rules only apply to repositories within an enterprise, cannot be applied to individual or regular organization repositories
       branch_name_pattern = optional(object({
-        operator = string # starts_with, ends_with, contains, regex
-        pattern  = string
-        name     = optional(string)
-        negate   = optional(bool)
+        operator = string           # starts_with, ends_with, contains, regex - The operator to use for matching
+        pattern  = string           # The pattern to match with
+        name     = optional(string) # How this rule will appear to users
+        negate   = optional(bool)   # If true, the rule will fail if the pattern matches
       }))
 
       tag_name_pattern = optional(object({
-        operator = string # starts_with, ends_with, contains, regex
-        pattern  = string
-        name     = optional(string)
-        negate   = optional(bool)
+        operator = string           # starts_with, ends_with, contains, regex - The operator to use for matching
+        pattern  = string           # The pattern to match with
+        name     = optional(string) # How this rule will appear to users
+        negate   = optional(bool)   # If true, the rule will fail if the pattern matches
       }))
 
       commit_author_email_pattern = optional(object({
-        operator = string # starts_with, ends_with, contains, regex
-        pattern  = string
-        name     = optional(string)
-        negate   = optional(bool)
+        operator = string           # starts_with, ends_with, contains, regex - The operator to use for matching
+        pattern  = string           # The pattern to match with
+        name     = optional(string) # How this rule will appear to users
+        negate   = optional(bool)   # If true, the rule will fail if the pattern matches
       }))
 
       commit_message_pattern = optional(object({
-        operator = string # starts_with, ends_with, contains, regex
-        pattern  = string
-        name     = optional(string)
-        negate   = optional(bool)
+        operator = string           # starts_with, ends_with, contains, regex - The operator to use for matching
+        pattern  = string           # The pattern to match with
+        name     = optional(string) # How this rule will appear to users
+        negate   = optional(bool)   # If true, the rule will fail if the pattern matches
       }))
 
       committer_email_pattern = optional(object({
-        operator = string # starts_with, ends_with, contains, regex
-        pattern  = string
-        name     = optional(string)
-        negate   = optional(bool)
+        operator = string           # starts_with, ends_with, contains, regex - The operator to use for matching
+        pattern  = string           # The pattern to match with
+        name     = optional(string) # How this rule will appear to users
+        negate   = optional(bool)   # If true, the rule will fail if the pattern matches
       }))
     })
 
     # Optional fields
     bypass_actors = optional(list(object({
-      actor_id    = number
-      actor_type  = string           # RepositoryRole, Team, Integration, OrganizationAdmin
-      bypass_mode = optional(string) # always, pull_request
+      actor_id    = number           # The ID of the actor that can bypass a ruleset
+      actor_type  = string           # RepositoryRole, Team, Integration, OrganizationAdmin - The type of actor that can bypass a ruleset
+      bypass_mode = optional(string) # always, pull_request - When the specified actor can bypass the ruleset
     })))
 
     conditions = optional(object({
       ref_name = object({
-        include = list(string)
-        exclude = list(string)
+        include = list(string) # Array of ref names or patterns to include. One of these patterns must match for the condition to pass
+        exclude = list(string) # Array of ref names or patterns to exclude. The condition will not pass if any of these patterns match
       })
-      repository_id = optional(list(number))
+      # NOTE: One of repository_id or repository_name must be set for the rule to target any repositories
+      repository_id = optional(list(number)) # The repository IDs that the ruleset applies to. One of these IDs must match for the condition to pass
       repository_name = optional(object({
-        include = list(string)
-        exclude = list(string)
+        include = list(string) # Array of repository names or patterns to include. One of these patterns must match for the condition to pass
+        exclude = list(string) # Array of repository names or patterns to exclude. The condition will not pass if any of these patterns match
       }))
     }))
   }))
