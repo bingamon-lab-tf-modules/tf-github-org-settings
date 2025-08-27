@@ -52,7 +52,7 @@ resource "github_organization_ruleset" "this" {
       for_each = each.value.rules.required_workflows != null ? [each.value.rules.required_workflows] : []
       content {
         dynamic "required_workflow" {
-          for_each = required_workflows.value.required_workflow != null ? required_workflows.value.required_workflow : []
+          for_each = required_workflows.value.required_workflow
           content {
             repository_id = required_workflow.value.repository_id
             path          = required_workflow.value.path
@@ -67,7 +67,7 @@ resource "github_organization_ruleset" "this" {
       for_each = each.value.rules.required_code_scanning != null ? [each.value.rules.required_code_scanning] : []
       content {
         dynamic "required_code_scanning_tool" {
-          for_each = required_code_scanning.value.required_code_scanning_tool != null ? required_code_scanning.value.required_code_scanning_tool : []
+          for_each = required_code_scanning.value.required_code_scanning_tool
           content {
             alerts_threshold          = required_code_scanning_tool.value.alerts_threshold
             security_alerts_threshold = required_code_scanning_tool.value.security_alerts_threshold
@@ -140,6 +140,7 @@ resource "github_organization_ruleset" "this" {
   }
 
   # Conditions
+  # NOTE: One of repository_id or repository_name must be set for the rule to target any repositories
   dynamic "conditions" {
     for_each = each.value.conditions != null ? [each.value.conditions] : []
     content {
@@ -163,10 +164,11 @@ resource "github_organization_ruleset" "this" {
   # Workaround for GitHub provider issue with OrganizationAdmin actor_id
   # The provider reads back actor_id = 0 instead of 1 for OrganizationAdmin
   # causing perpetual drift. Ignore changes to bypass_actors to prevent this.
-  # Refer issue #2536
+  # Refer issue #2536 - Remove this workaround once the issue is fixed.
   lifecycle {
+    create_before_destroy = true
     ignore_changes = [
-      #bypass_actors
+      bypass_actors
     ]
   }
 
