@@ -169,6 +169,7 @@ in
             MD013 = {
               line_length = 500;
             };
+            MD059 = "off";
             MD033 = {
               allowed_elements = [
                 "a"
