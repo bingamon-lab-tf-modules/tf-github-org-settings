@@ -165,6 +165,7 @@ resource "github_organization_ruleset" "this" {
   # causing perpetual drift. Ignore changes to bypass_actors to prevent this.
   # Refer issue #2536
   lifecycle {
+    create_before_destroy = true
     ignore_changes = [
       #bypass_actors
     ]
