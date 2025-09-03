@@ -78,6 +78,8 @@ resource "github_organization_ruleset" "this" {
     }
 
     # Pattern rules (Enterprise only)
+
+    # Only when the target is 'branch'
     dynamic "branch_name_pattern" {
       for_each = each.value.rules.branch_name_pattern != null ? [each.value.rules.branch_name_pattern] : []
       content {
@@ -88,6 +90,7 @@ resource "github_organization_ruleset" "this" {
       }
     }
 
+    # Only when the target is 'tag'
     dynamic "tag_name_pattern" {
       for_each = each.value.rules.tag_name_pattern != null ? [each.value.rules.tag_name_pattern] : []
       content {
