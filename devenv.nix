@@ -164,6 +164,9 @@ in
       gptcommit.enable = true;
       markdownlint = {
         enable = true;
+        excludes = [
+          "module/README.md"
+        ];
         settings = {
           configuration = {
             MD013 = {
