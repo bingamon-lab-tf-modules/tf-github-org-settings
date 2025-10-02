@@ -9,7 +9,7 @@
 
 ## Overview
 
-This module configures an existing GitHub Organization within a given GitHub Enterprise.
+This module configures the settings for an existing GitHub Organization within a given GitHub Enterprise.
 
 ## Documentation
 

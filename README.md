@@ -2,6 +2,6 @@
 
 ## Overview
 
-A Terraform Module for GitHub Organization settings.
+A Terraform Module for managing GitHub Organization settings.
 
 Additional Terraform Module documentation is available [here](module/README.md)

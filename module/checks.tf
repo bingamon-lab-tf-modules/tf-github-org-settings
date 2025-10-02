@@ -94,6 +94,70 @@ Actor type ID mappings:
 }
 }
 
+# Validate organization ruleset target pattern requirements
+check "organization_ruleset_target_patterns" {
+  assert {
+    condition = alltrue([
+      for ruleset in var.github_organization_rulesets :
+      ruleset if(
+        # When target is 'branch', branch_name_pattern is required
+        (ruleset.target == "branch" ? ruleset.rules.branch_name_pattern != null : true) &&
+        # When target is 'tag', tag_name_pattern is required
+        (ruleset.target == "tag" ? ruleset.rules.tag_name_pattern != null : true)
+      )
+    ])
+    error_message = <<EOT
+Invalid organization ruleset target pattern configurations.
+
+Organization ruleset target pattern requirements:
+  - When target is "branch", branch_name_pattern must be specified
+  - When target is "tag", tag_name_pattern must be specified
+
+Organization rulesets with invalid target patterns: ${join(", ", [
+    for ruleset in var.github_organization_rulesets :
+    "'${ruleset.name}' (target: ${ruleset.target})" if !(
+      (ruleset.target == "branch" ? ruleset.rules.branch_name_pattern != null : true) &&
+      (ruleset.target == "tag" ? ruleset.rules.tag_name_pattern != null : true)
+    )
+])}
+
+Examples of valid organization ruleset configurations:
+
+  # Branch-targeting ruleset (requires branch_name_pattern)
+  rulesets = [
+    {
+      name        = "org-main-branch-protection"
+      enforcement = "active"
+      target      = "branch"
+      rules = {
+        branch_name_pattern = {
+          operator = "starts_with"
+          pattern  = "main"
+        }
+        required_linear_history = true
+      }
+    }
+  ]
+
+  # Tag-targeting ruleset (requires tag_name_pattern)
+  rulesets = [
+    {
+      name        = "org-release-tag-protection"
+      enforcement = "active"
+      target      = "tag"
+      rules = {
+        tag_name_pattern = {
+          operator = "starts_with"
+          pattern  = "v"
+        }
+        deletion = false
+      }
+    }
+  ]
+    EOT
+}
+}
+
 # Validate organization ruleset pattern rules operators
 check "organization_rulesets_pattern_operators" {
   assert {

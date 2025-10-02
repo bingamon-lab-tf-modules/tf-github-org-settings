@@ -279,6 +279,5 @@ variable "github_organization_rulesets" {
       }))
     }))
   }))
-
   default = []
 }
