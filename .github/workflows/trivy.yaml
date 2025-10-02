@@ -23,7 +23,7 @@ on:  # yamllint disable-line rule:truthy
       - "main"
       - "master"
       - "trunk"
-    paths_ignore:
+    paths-ignore:
       - "docs/**"
       - "*.md"
       - "**/*.md"
