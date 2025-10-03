@@ -36,7 +36,7 @@ let
 
     # Terraform/OpenTofu
     packer
-    terraform-docs
+    #terraform-docs # TODO: Enable when upstream devenv is updated.
     terraform-providers.aci
     terraform-providers.artifactory
     terraform-providers.bigip
@@ -135,13 +135,13 @@ in
     ];
     hooks = {
       actionlint.enable = true;
-      #action-validator.enable = true; # TODO: Enable when devenv upstream is fixed..
+      action-validator.enable = true;
       check-json.enable = true;
       check-merge-conflicts.enable = true;
       check-shebang-scripts-are-executable.enable = true;
       check-symlinks.enable = true;
       check-yaml.enable = true;
-      commitizen.enable = true;
+      #commitizen.enable = true; # TODO: Enable when devenv upstram is fixed.
       convco.enable = true;
       deadnix.enable = true;
       dialyzer.enable = true;
