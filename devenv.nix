@@ -71,7 +71,7 @@ in
   };
 
   cachix = {
-    enable = false; # TODO: cache issue?
+    enable = true;
     pull = [
       "bingamon-lab-tf-modules"
     ];
