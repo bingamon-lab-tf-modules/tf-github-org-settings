@@ -135,7 +135,7 @@ in
     ];
     hooks = {
       actionlint.enable = true;
-      #action-validator.enable = true; # TODO: Enable when devenv upstream is fixed.
+      #action-validator.enable = true; # TODO: Enable when devenv upstream is fixed..
       check-json.enable = true;
       check-merge-conflicts.enable = true;
       check-shebang-scripts-are-executable.enable = true;
