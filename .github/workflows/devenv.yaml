@@ -78,10 +78,6 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           enable_kvm: true
 
-      - id: show_nix
-        name: "Show Nix version ❄️"
-        run: nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version'
-
       - id: cachix
         name: "Enable Cachix ❄️"
         uses: cachix/cachix-action@v16
