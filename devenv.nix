@@ -36,7 +36,7 @@ let
 
     # Terraform/OpenTofu
     packer
-    #terraform-docs # TODO: Enable when upstream devenv is updated.
+    terraform-docs
     terraform-providers.aci
     terraform-providers.artifactory
     terraform-providers.bigip

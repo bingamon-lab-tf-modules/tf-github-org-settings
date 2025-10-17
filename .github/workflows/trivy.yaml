@@ -24,7 +24,6 @@ on:  # yamllint disable-line rule:truthy
       - "master"
       - "trunk"
     paths-ignore:
-      - "docs/**"
       - "*.md"
       - "**/*.md"
 
