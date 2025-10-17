@@ -4,4 +4,4 @@
 
 A Terraform Module for managing GitHub Organization settings.
 
-Additional Terraform Module documentation is available [here](module/README.md)
+The [Terraform Module](module/README.md) documentation contains the available variables and outputs.
