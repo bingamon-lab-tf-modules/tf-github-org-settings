@@ -133,7 +133,7 @@ in
       check-shebang-scripts-are-executable.enable = true;
       check-symlinks.enable = true;
       check-yaml.enable = true;
-      #commitizen.enable = true; # TODO: Enable when devenv upstram is fixed.
+      commitizen.enable = true;
       convco.enable = true;
       deadnix.enable = true;
       dialyzer.enable = true;
@@ -170,7 +170,9 @@ in
       pre-commit-hook-ensure-sops.enable = true;
       prettier = {
         enable = true;
-        excludes = [ ];
+        excludes = [
+          "module/README"
+        ];
       };
       # Use prettier instead.
       pretty-format-json.enable = false;
