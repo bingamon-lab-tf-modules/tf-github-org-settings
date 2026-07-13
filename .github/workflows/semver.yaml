@@ -15,9 +15,6 @@ on:  # yamllint disable-line rule:truthy
       - master
       - trunk
       - candidate # Release Candidates
-    paths:
-      - "module/*" # Only run when the module is updated
-      - "scripts/*" # Only run when the scripts are updated
   # Release (Push)
   push:
     branches:
@@ -25,9 +22,6 @@ on:  # yamllint disable-line rule:truthy
       - master
       - trunk
       - candidate # Release Candidates
-    paths:
-      - "module/*" # Only run when the module is updated
-      - "scripts/*" # Only run when the scripts are updated
   # Manual Trigger
   workflow_dispatch:
     inputs:
@@ -225,10 +219,10 @@ jobs:
 
             // Determine if this is a release candidate based on branch or label content
             const isCandidate = context.ref.includes('candidate') ||
-                               originalLabel.toLowerCase().includes('rc') ||
-                               originalLabel.toLowerCase().includes('candidate') ||
-                               originalLabel.toLowerCase().includes('alpha') ||
-                               originalLabel.toLowerCase().includes('beta');
+                                originalLabel.toLowerCase().includes('rc') ||
+                                originalLabel.toLowerCase().includes('candidate') ||
+                                originalLabel.toLowerCase().includes('alpha') ||
+                                originalLabel.toLowerCase().includes('beta');
 
             console.log(`Selected version type: ${versionType.toUpperCase()} (from label: "${originalLabel}")`);
             console.log(`Is release candidate: ${isCandidate}`);
