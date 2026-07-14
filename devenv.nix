@@ -131,7 +131,9 @@ in
   };
 
   git-hooks = {
-    excludes = [ ];
+    excludes = [
+      "\\.devcontainer/devcontainer\\.json$"
+    ];
     hooks = {
       actionlint.enable = true;
       action-validator.enable = true;
@@ -188,8 +190,7 @@ in
       prettier = {
         enable = true;
         excludes = [
-          "module/README"
-          "\\.devcontainer/devcontainer\\.json$"
+          "module/README.md"
         ];
       };
       # Use prettier instead.
