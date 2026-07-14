@@ -189,6 +189,7 @@ in
         enable = true;
         excludes = [
           "module/README"
+          "\\.devcontainer/devcontainer\\.json$"
         ];
       };
       # Use prettier instead.
