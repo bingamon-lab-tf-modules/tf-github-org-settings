@@ -117,46 +117,64 @@ check "organization_ruleset_target_patterns" {
     condition = alltrue([
       for ruleset in var.github_organization_rulesets :
       (
-        # When target is 'branch', branch_name_pattern is required
-        (ruleset.target == "branch" ? ruleset.rules.branch_name_pattern != null : true) &&
-        # When target is 'tag', tag_name_pattern is required
-        (ruleset.target == "tag" ? ruleset.rules.tag_name_pattern != null : true)
+        # A name-pattern rule constrains which target it may be used with; the target does not
+        # require a name-pattern rule. Both rules are optional and enterprise-only, and the
+        # provider declares them mutually exclusive precisely because each is tied to one target.
+        (ruleset.rules.branch_name_pattern != null ? ruleset.target == "branch" : true) &&
+        (ruleset.rules.tag_name_pattern != null ? ruleset.target == "tag" : true)
       )
     ])
     error_message = <<EOT
 Invalid organization ruleset target pattern configurations.
 
 Organization ruleset target pattern requirements:
-  - When target is "branch", branch_name_pattern must be specified
-  - When target is "tag", tag_name_pattern must be specified
+  - branch_name_pattern may only be used on a ruleset with target "branch"
+  - tag_name_pattern may only be used on a ruleset with target "tag"
 
 Organization rulesets with invalid target patterns: ${join(", ", [
     for ruleset in var.github_organization_rulesets :
-    "'${ruleset.name}' (target: ${ruleset.target})" if !(
-      (ruleset.target == "branch" ? ruleset.rules.branch_name_pattern != null : true) &&
-      (ruleset.target == "tag" ? ruleset.rules.tag_name_pattern != null : true)
+    # NOTE: error_message is evaluated eagerly, even when the assertion passes, so name and
+    # target must be guarded - interpolating a null hard-fails the plan.
+    "'${ruleset.name == null ? "(unnamed)" : tostring(ruleset.name)}' (target: ${ruleset.target == null ? "(none)" : tostring(ruleset.target)})" if !(
+      (ruleset.rules.branch_name_pattern != null ? ruleset.target == "branch" : true) &&
+      (ruleset.rules.tag_name_pattern != null ? ruleset.target == "tag" : true)
     )
 ])}
 
+Both branch_name_pattern and tag_name_pattern are optional, enterprise-only rules. Neither is
+required by any target - a branch-targeting ruleset needs no branch_name_pattern. The provider
+declares the two rules mutually exclusive, so each may only appear on its matching target.
+
 Examples of valid organization ruleset configurations:
 
-  # Branch-targeting ruleset (requires branch_name_pattern)
+  # Branch-targeting ruleset with no name pattern at all
   rulesets = [
     {
       name        = "org-main-branch-protection"
       enforcement = "active"
       target      = "branch"
       rules = {
-        branch_name_pattern = {
-          operator = "starts_with"
-          pattern  = "main"
-        }
         required_linear_history = true
       }
     }
   ]
 
-  # Tag-targeting ruleset (requires tag_name_pattern)
+  # Branch-targeting ruleset that does use branch_name_pattern (enterprise only)
+  rulesets = [
+    {
+      name        = "org-release-branch-naming"
+      enforcement = "active"
+      target      = "branch"
+      rules = {
+        branch_name_pattern = {
+          operator = "starts_with"
+          pattern  = "release/"
+        }
+      }
+    }
+  ]
+
+  # Tag-targeting ruleset that does use tag_name_pattern (enterprise only)
   rulesets = [
     {
       name        = "org-release-tag-protection"
