@@ -260,10 +260,15 @@ variable "github_organization_rulesets" {
     })
 
     # Optional fields
+    # Valid actor_type values at the organization scope are RepositoryRole, Team, Integration,
+    # OrganizationAdmin, DeployKey and EnterpriseOwner.
+    # NOTE: "User" is NOT valid here - it is only accepted by repository-level rulesets.
+    # actor_id must be omitted for the ID-less actor types (OrganizationAdmin, EnterpriseOwner,
+    # DeployKey); the GitHub API does not use an ID for those and ignores any value supplied.
     bypass_actors = optional(list(object({
-      actor_id    = number           # The ID of the actor that can bypass a ruleset
-      actor_type  = string           # RepositoryRole, Team, Integration, OrganizationAdmin - The type of actor that can bypass a ruleset
-      bypass_mode = optional(string) # always, pull_request - When the specified actor can bypass the ruleset
+      actor_id    = optional(number) # The ID of the actor that can bypass a ruleset. Omit for ID-less actor types
+      actor_type  = string           # RepositoryRole, Team, Integration, OrganizationAdmin, DeployKey, EnterpriseOwner
+      bypass_mode = string           # Required. always, pull_request, exempt - When the specified actor can bypass the ruleset
     })))
 
     conditions = optional(object({
@@ -271,11 +276,25 @@ variable "github_organization_rulesets" {
         include = list(string) # Array of ref names or patterns to include. One of these patterns must match for the condition to pass
         exclude = list(string) # Array of ref names or patterns to exclude. The condition will not pass if any of these patterns match
       })
-      # NOTE: One of repository_id or repository_name must be set for the rule to target any repositories
+      # NOTE: Exactly one of repository_id, repository_name or repository_property must be set for
+      # the rule to target any repositories
       repository_id = optional(list(number)) # The repository IDs that the ruleset applies to. One of these IDs must match for the condition to pass
       repository_name = optional(object({
         include = list(string) # Array of repository names or patterns to include. One of these patterns must match for the condition to pass
         exclude = list(string) # Array of repository names or patterns to exclude. The condition will not pass if any of these patterns match
+      }))
+      # Target repositories by custom or system properties
+      repository_property = optional(object({
+        include = optional(list(object({
+          name            = string           # The name of the repository property to target
+          property_values = list(string)     # The values to match for the repository property
+          source          = optional(string) # custom, system - Defaults to "custom" when unset
+        })))
+        exclude = optional(list(object({
+          name            = string           # The name of the repository property to target
+          property_values = list(string)     # The values to match for the repository property
+          source          = optional(string) # custom, system - Defaults to "custom" when unset
+        })))
       }))
     }))
   }))

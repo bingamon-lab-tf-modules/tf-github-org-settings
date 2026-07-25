@@ -34,5 +34,97 @@ module "test" {
   github_organization_dependency_graph_enabled_for_new_repositories                = true
   github_organization_secret_scanning_enabled_for_new_repositories                 = true
   github_organization_secret_scanning_push_protection_enabled_for_new_repositories = true
-  github_organization_rulesets                                                     = []
+
+  github_organization_rulesets = [
+    {
+      name        = "test-branch-protection"
+      enforcement = "active"
+      target      = "branch"
+
+      rules = {
+        deletion                = true
+        non_fast_forward        = true
+        required_linear_history = true
+
+        branch_name_pattern = {
+          operator = "starts_with"
+          pattern  = "main"
+        }
+      }
+
+      # Exercises both ID-bearing and ID-less bypass actor types.
+      # actor_id is deliberately omitted for OrganizationAdmin and DeployKey.
+      bypass_actors = [
+        {
+          actor_type  = "OrganizationAdmin"
+          bypass_mode = "always"
+        },
+        {
+          actor_type  = "DeployKey"
+          bypass_mode = "exempt"
+        },
+        {
+          actor_id    = 5
+          actor_type  = "RepositoryRole"
+          bypass_mode = "pull_request"
+        },
+      ]
+
+      conditions = {
+        ref_name = {
+          include = ["~DEFAULT_BRANCH"]
+          exclude = []
+        }
+        repository_name = {
+          include = ["~ALL"]
+          exclude = ["archived-*"]
+        }
+      }
+    },
+    {
+      name        = "test-property-protection"
+      enforcement = "evaluate"
+      target      = "branch"
+
+      rules = {
+        required_signatures = true
+
+        branch_name_pattern = {
+          operator = "starts_with"
+          pattern  = "release/"
+        }
+      }
+
+      bypass_actors = [
+        {
+          actor_type  = "EnterpriseOwner"
+          bypass_mode = "always"
+        },
+      ]
+
+      # Exercises the repository_property condition added in provider 6.12.0.
+      conditions = {
+        ref_name = {
+          include = ["~ALL"]
+          exclude = []
+        }
+        repository_property = {
+          include = [
+            {
+              name            = "environment"
+              property_values = ["production"]
+              source          = "custom"
+            },
+          ]
+          exclude = [
+            {
+              name            = "repository_visibility"
+              property_values = ["public"]
+              source          = "system"
+            },
+          ]
+        }
+      }
+    },
+  ]
 }
