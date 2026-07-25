@@ -66,7 +66,9 @@ Invalid bypass actors found in organization ruleset configurations.
 Organization rulesets with invalid bypass actors: ${join(", ", flatten([
     for ruleset in var.github_organization_rulesets : [
       for actor in(ruleset.bypass_actors != null ? ruleset.bypass_actors : []) :
-      "${ruleset.name} (type: ${actor.actor_type}, id: ${actor.actor_id == null ? "none" : actor.actor_id})" if !(
+      # NOTE: error_message is evaluated eagerly, even when the assertion passes, so actor_id must
+      # be guarded - interpolating a null hard-fails the plan.
+      "${ruleset.name} (type: ${actor.actor_type}, id: ${actor.actor_id == null ? "(none)" : tostring(actor.actor_id)})" if !(
         contains(["Integration", "OrganizationAdmin", "RepositoryRole", "Team", "DeployKey", "EnterpriseOwner"], actor.actor_type) &&
         contains(["always", "pull_request", "exempt"], actor.bypass_mode) &&
         (
@@ -109,9 +111,12 @@ Actor type ID mappings:
 # Validate organization ruleset target pattern requirements
 check "organization_ruleset_target_patterns" {
   assert {
+    # NOTE: this must evaluate to a list of bool. Yielding the ruleset object and using an `if`
+    # filter made alltrue() fail with "bool required, but have object", which hard-fails the whole
+    # plan for any non-empty ruleset list rather than reporting a check warning.
     condition = alltrue([
       for ruleset in var.github_organization_rulesets :
-      ruleset if(
+      (
         # When target is 'branch', branch_name_pattern is required
         (ruleset.target == "branch" ? ruleset.rules.branch_name_pattern != null : true) &&
         # When target is 'tag', tag_name_pattern is required
