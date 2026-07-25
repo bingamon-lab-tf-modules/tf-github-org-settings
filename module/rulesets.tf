@@ -133,17 +133,21 @@ resource "github_organization_ruleset" "this" {
   }
 
   # Bypass actors
+  # NOTE: OrganizationAdmin, EnterpriseOwner and DeployKey have no actor ID. Resolving actor_id to
+  # null makes OpenTofu omit the argument entirely, which is what the GitHub API expects - it
+  # ignores any ID supplied for those actor types.
   dynamic "bypass_actors" {
     for_each = each.value.bypass_actors != null ? each.value.bypass_actors : []
     content {
-      actor_id    = bypass_actors.value.actor_id
+      actor_id    = contains(["OrganizationAdmin", "EnterpriseOwner", "DeployKey"], bypass_actors.value.actor_type) ? null : bypass_actors.value.actor_id
       actor_type  = bypass_actors.value.actor_type
-      bypass_mode = try(bypass_actors.value.bypass_mode, null)
+      bypass_mode = bypass_actors.value.bypass_mode
     }
   }
 
   # Conditions
-  # NOTE: One of repository_id or repository_name must be set for the rule to target any repositories
+  # NOTE: Exactly one of repository_id, repository_name or repository_property must be set for the
+  # rule to target any repositories
   dynamic "conditions" {
     for_each = each.value.conditions != null ? [each.value.conditions] : []
     content {
@@ -161,13 +165,24 @@ resource "github_organization_ruleset" "this" {
           exclude = repository_name.value.exclude
         }
       }
+
+      # include/exclude are attributes, not nested blocks, so they are assigned lists of objects
+      dynamic "repository_property" {
+        for_each = conditions.value.repository_property != null ? [conditions.value.repository_property] : []
+        content {
+          include = try(repository_property.value.include, null)
+          exclude = try(repository_property.value.exclude, null)
+        }
+      }
     }
   }
 
   # Workaround for GitHub provider issue with OrganizationAdmin actor_id
   # The provider reads back actor_id = 0 instead of 1 for OrganizationAdmin
   # causing perpetual drift. Ignore changes to bypass_actors to prevent this.
-  # Refer issue #2536 - Remove this workaround once the issue is fixed.
+  # Refer issue #2536 - provider 6.13.0 makes actor_id optional and this module now omits it for
+  # ID-less actor types, which may have resolved the drift. Removal is pending verification against
+  # two consecutive live plans, so the workaround is retained for now.
   lifecycle {
     create_before_destroy = true
     ignore_changes = [

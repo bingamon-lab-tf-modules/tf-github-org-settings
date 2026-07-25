@@ -43,16 +43,20 @@ check "organization_rulesets_bypass_actors" {
     condition = alltrue(flatten([
       for ruleset in var.github_organization_rulesets : [
         for actor in(ruleset.bypass_actors != null ? ruleset.bypass_actors : []) :
-        contains(["RepositoryRole", "Team", "Integration", "OrganizationAdmin"], actor.actor_type) &&
-        (actor.bypass_mode == null || contains(["always", "pull_request"], actor.bypass_mode)) &&
-        actor.actor_id != null &&
-        can(tonumber(actor.actor_id)) &&
+        contains(["Integration", "OrganizationAdmin", "RepositoryRole", "Team", "DeployKey", "EnterpriseOwner"], actor.actor_type) &&
+        contains(["always", "pull_request", "exempt"], actor.bypass_mode) &&
         (
-          # Validate actor_id based on actor_type
-          (actor.actor_type == "OrganizationAdmin" && contains([0, 1], actor.actor_id)) ||
-          (actor.actor_type == "RepositoryRole" && contains([2, 4, 5], actor.actor_id)) ||
-          (actor.actor_type == "Team" && actor.actor_id > 0) ||
-          (actor.actor_type == "Integration" && actor.actor_id > 0)
+          # OrganizationAdmin, EnterpriseOwner and DeployKey have no actor ID
+          contains(["OrganizationAdmin", "EnterpriseOwner", "DeployKey"], actor.actor_type) ? true : (
+            actor.actor_id != null &&
+            can(tonumber(actor.actor_id)) &&
+            (
+              # Validate actor_id based on actor_type
+              (actor.actor_type == "RepositoryRole" && contains([2, 4, 5], actor.actor_id)) ||
+              (actor.actor_type == "Team" && actor.actor_id > 0) ||
+              (actor.actor_type == "Integration" && actor.actor_id > 0)
+            )
+          )
         )
       ]
     ]))
@@ -62,29 +66,37 @@ Invalid bypass actors found in organization ruleset configurations.
 Organization rulesets with invalid bypass actors: ${join(", ", flatten([
     for ruleset in var.github_organization_rulesets : [
       for actor in(ruleset.bypass_actors != null ? ruleset.bypass_actors : []) :
-      "${ruleset.name} (type: ${actor.actor_type}, id: ${actor.actor_id})" if !(
-        contains(["RepositoryRole", "Team", "Integration", "OrganizationAdmin"], actor.actor_type) &&
-        (actor.bypass_mode == null || contains(["always", "pull_request"], actor.bypass_mode)) &&
-        actor.actor_id != null &&
-        can(tonumber(actor.actor_id)) &&
+      "${ruleset.name} (type: ${actor.actor_type}, id: ${actor.actor_id == null ? "none" : actor.actor_id})" if !(
+        contains(["Integration", "OrganizationAdmin", "RepositoryRole", "Team", "DeployKey", "EnterpriseOwner"], actor.actor_type) &&
+        contains(["always", "pull_request", "exempt"], actor.bypass_mode) &&
         (
-          # Note: OrganizationAdmin supports both 0 and 1 due to GitHub API changes (see issue #2536)
-          (actor.actor_type == "OrganizationAdmin" && contains([0, 1], actor.actor_id)) ||
-          (actor.actor_type == "RepositoryRole" && contains([2, 4, 5], actor.actor_id)) ||
-          (actor.actor_type == "Team" && actor.actor_id > 0) ||
-          (actor.actor_type == "Integration" && actor.actor_id > 0)
+          contains(["OrganizationAdmin", "EnterpriseOwner", "DeployKey"], actor.actor_type) ? true : (
+            actor.actor_id != null &&
+            can(tonumber(actor.actor_id)) &&
+            (
+              (actor.actor_type == "RepositoryRole" && contains([2, 4, 5], actor.actor_id)) ||
+              (actor.actor_type == "Team" && actor.actor_id > 0) ||
+              (actor.actor_type == "Integration" && actor.actor_id > 0)
+            )
+          )
         )
       )
     ]
 ]))}
 
 Bypass actor requirements:
-  - actor_type: Must be one of "RepositoryRole", "Team", "Integration", "OrganizationAdmin"
-  - bypass_mode: Must be one of "always", "pull_request" (or null)
-  - actor_id: Must be a valid number
+  - actor_type: Must be one of "Integration", "OrganizationAdmin", "RepositoryRole", "Team", "DeployKey", "EnterpriseOwner"
+  - bypass_mode: Required. Must be one of "always", "pull_request", "exempt"
+  - actor_id: Must be a valid number for actor types that have an ID, and omitted for those that do not
+
+Note: "User" is only valid for repository-level rulesets, not organization-level rulesets.
+
+Actor types with no ID (omit actor_id):
+  - OrganizationAdmin
+  - EnterpriseOwner
+  - DeployKey
 
 Actor type ID mappings:
-  - OrganizationAdmin: Must be 0 or 1 (GitHub changed from 1 to 0 recently)
   - RepositoryRole maintain: Must be 2
   - RepositoryRole write: Must be 4
   - RepositoryRole admin: Must be 5
@@ -253,15 +265,36 @@ check "organization_ruleset_conditions" {
         length(ruleset.conditions.ref_name.include) > 0 &&
         # exclude is required (can be empty)
         ruleset.conditions.ref_name.exclude != null &&
-        # Either repository_id or repository_name must be set (along with ref_name)
-        (ruleset.conditions.repository_id != null || ruleset.conditions.repository_name != null) &&
-        # repository_id and repository_name cannot both be set
-        !(ruleset.conditions.repository_id != null && ruleset.conditions.repository_name != null) &&
+        # Exactly one of repository_id, repository_name or repository_property must be set
+        length([
+          for target in [
+            ruleset.conditions.repository_id,
+            ruleset.conditions.repository_name,
+            ruleset.conditions.repository_property,
+          ] : target if target != null
+        ]) == 1 &&
         # If repository_name is set, it must have include and exclude arrays
         (ruleset.conditions.repository_name == null || (
           ruleset.conditions.repository_name.include != null &&
           length(ruleset.conditions.repository_name.include) > 0 &&
           ruleset.conditions.repository_name.exclude != null
+        )) &&
+        # If repository_property is set, at least one property must be targeted and every entry
+        # must name a property, supply at least one value, and use a known source
+        (ruleset.conditions.repository_property == null || (
+          length(concat(
+            coalesce(ruleset.conditions.repository_property.include, []),
+            coalesce(ruleset.conditions.repository_property.exclude, []),
+          )) > 0 &&
+          alltrue([
+            for property in concat(
+              coalesce(ruleset.conditions.repository_property.include, []),
+              coalesce(ruleset.conditions.repository_property.exclude, []),
+            ) :
+            property.name != null && property.name != "" &&
+            property.property_values != null && length(property.property_values) > 0 &&
+            (property.source == null || contains(["custom", "system"], property.source))
+          ])
         ))
       )
     ])
@@ -276,12 +309,32 @@ Organization rulesets with invalid conditions: ${join(", ", [
         ruleset.conditions.ref_name.include != null &&
         length(ruleset.conditions.ref_name.include) > 0 &&
         ruleset.conditions.ref_name.exclude != null &&
-        (ruleset.conditions.repository_id != null || ruleset.conditions.repository_name != null) &&
-        !(ruleset.conditions.repository_id != null && ruleset.conditions.repository_name != null) &&
+        length([
+          for target in [
+            ruleset.conditions.repository_id,
+            ruleset.conditions.repository_name,
+            ruleset.conditions.repository_property,
+          ] : target if target != null
+        ]) == 1 &&
         (ruleset.conditions.repository_name == null || (
           ruleset.conditions.repository_name.include != null &&
           length(ruleset.conditions.repository_name.include) > 0 &&
           ruleset.conditions.repository_name.exclude != null
+        )) &&
+        (ruleset.conditions.repository_property == null || (
+          length(concat(
+            coalesce(ruleset.conditions.repository_property.include, []),
+            coalesce(ruleset.conditions.repository_property.exclude, []),
+          )) > 0 &&
+          alltrue([
+            for property in concat(
+              coalesce(ruleset.conditions.repository_property.include, []),
+              coalesce(ruleset.conditions.repository_property.exclude, []),
+            ) :
+            property.name != null && property.name != "" &&
+            property.property_values != null && length(property.property_values) > 0 &&
+            (property.source == null || contains(["custom", "system"], property.source))
+          ])
         ))
       )
     )
@@ -291,9 +344,10 @@ Condition requirements:
   - ref_name: Always required block
   - ref_name.include: Required list with at least one pattern
   - ref_name.exclude: Required list (can be empty)
-  - One of repository_id OR repository_name must be set (but not both)
+  - Exactly one of repository_id, repository_name OR repository_property must be set
   - repository_id: List of repository IDs
   - repository_name: Object with include and exclude arrays
+  - repository_property: Object with include and/or exclude lists of property objects
 
 Special patterns supported in ref_name include/exclude:
   - ~DEFAULT_BRANCH: Matches the default branch of target repositories
@@ -301,6 +355,11 @@ Special patterns supported in ref_name include/exclude:
 
 Special patterns supported in repository_name include/exclude:
   - ~ALL: Matches all repositories (only valid in include)
+
+Repository property requirements:
+  - name: Required. The name of the repository property to target
+  - property_values: Required. At least one value to match
+  - source: Optional. One of "custom", "system" (defaults to "custom")
 
 Examples:
   conditions = {
@@ -321,6 +380,24 @@ OR
     repository_name = {
       include = ["~ALL"]
       exclude = ["archived-*"]
+    }
+  }
+
+OR
+
+  conditions = {
+    ref_name = {
+      include = ["~DEFAULT_BRANCH"]
+      exclude = []
+    }
+    repository_property = {
+      include = [
+        {
+          name            = "environment"
+          property_values = ["production"]
+          source          = "custom"
+        }
+      ]
     }
   }
     EOT
