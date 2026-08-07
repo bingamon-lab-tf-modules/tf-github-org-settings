@@ -80,7 +80,6 @@ resource "github_organization_settings" "this" {
   secret_scanning_push_protection_enabled_for_new_repositories = var.github_organization_secret_scanning_push_protection_enabled_for_new_repositories
 
   depends_on = [
-    data.github_enterprise.this,
     data.github_organization.this
   ]
 }
