@@ -37,14 +37,12 @@ No modules.
 |------|------|
 | [github_organization_ruleset.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_ruleset) | resource |
 | [github_organization_settings.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_settings) | resource |
-| [github_enterprise.this](https://registry.terraform.io/providers/integrations/github/latest/docs/data-sources/enterprise) | data source |
 | [github_organization.this](https://registry.terraform.io/providers/integrations/github/latest/docs/data-sources/organization) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_github_enterprise_slug"></a> [github\_enterprise\_slug](#input\_github\_enterprise\_slug) | The slug of the GitHub Enterprise where resources will be created.<br/><br/>  This is needed by the GitHub Enterprise Terraform provider.<br/><br/>  This can be set via either;<br/><br/>  - TF\_VAR\_github\_enterprise\_slug environment variable.<br/>  - github\_enterprise\_slug variable in the terraform.tfvars file. | `string` | n/a | yes |
 | <a name="input_github_organization_advanced_security_enabled_for_new_repositories"></a> [github\_organization\_advanced\_security\_enabled\_for\_new\_repositories](#input\_github\_organization\_advanced\_security\_enabled\_for\_new\_repositories) | Optional. Whether advanced security is enabled for new repositories. | `bool` | `true` | no |
 | <a name="input_github_organization_billing_email"></a> [github\_organization\_billing\_email](#input\_github\_organization\_billing\_email) | Required. The billing email of the GitHub Organization where resources will be created. | `string` | n/a | yes |
 | <a name="input_github_organization_blog"></a> [github\_organization\_blog](#input\_github\_organization\_blog) | Optional. The blog of the GitHub Organization where resources will be created. | `string` | `null` | no |

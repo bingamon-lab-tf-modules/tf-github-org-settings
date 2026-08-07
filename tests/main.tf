@@ -1,7 +1,6 @@
 module "test" {
   source = "../module"
 
-  github_enterprise_slug   = "acme-corp"
   github_organization_name = "acme-engineering"
 
   github_organization_billing_email = "acme-engineering@acme.com"
