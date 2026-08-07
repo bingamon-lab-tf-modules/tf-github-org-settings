@@ -77,4 +77,5 @@ No modules.
 |------|-------------|
 | <a name="output_organization_rulesets"></a> [organization\_rulesets](#output\_organization\_rulesets) | Map of all organization rulesets created by this module |
 | <a name="output_organization_settings"></a> [organization\_settings](#output\_organization\_settings) | The organization settings resource |
+| <a name="output_repository_names"></a> [repository\_names](#output\_repository\_names) | Names of every repository in the organization, archived ones included.<br/><br/>Sourced from data.github\_organization, which builds its list from the<br/>paginated REST list-repos endpoint - unlike data.github\_repositories, which is<br/>backed by the Search API and both lags indexing and caps at 1000 results.<br/><br/>The data source returns "owner/repo"; the owner prefix is stripped here because<br/>consumers compare these against configuration that names repositories bare.<br/><br/>Archived repositories are included (ignore\_archived\_repos defaults to false),<br/>so archiving a repository cannot be used to hide it from a caller reconciling<br/>live state against configuration. |
 <!-- END_TF_DOCS -->
