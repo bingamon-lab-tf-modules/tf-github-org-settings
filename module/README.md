@@ -17,14 +17,14 @@ This module configures the settings for an existing GitHub Organization within a
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
 | <a name="requirement_github"></a> [github](#requirement\_github) | ~> 6.13 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_github"></a> [github](#provider\_github) | 6.13.0 |
 
 ## Modules
@@ -34,7 +34,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [github_organization_ruleset.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_ruleset) | resource |
 | [github_organization_settings.this](https://registry.terraform.io/providers/integrations/github/latest/docs/resources/organization_settings) | resource |
 | [github_organization.this](https://registry.terraform.io/providers/integrations/github/latest/docs/data-sources/organization) | data source |
@@ -42,7 +42,7 @@ No modules.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_github_organization_advanced_security_enabled_for_new_repositories"></a> [github\_organization\_advanced\_security\_enabled\_for\_new\_repositories](#input\_github\_organization\_advanced\_security\_enabled\_for\_new\_repositories) | Optional. Whether advanced security is enabled for new repositories. | `bool` | `true` | no |
 | <a name="input_github_organization_billing_email"></a> [github\_organization\_billing\_email](#input\_github\_organization\_billing\_email) | Required. The billing email of the GitHub Organization where resources will be created. | `string` | n/a | yes |
 | <a name="input_github_organization_blog"></a> [github\_organization\_blog](#input\_github\_organization\_blog) | Optional. The blog of the GitHub Organization where resources will be created. | `string` | `null` | no |
@@ -74,7 +74,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_organization_rulesets"></a> [organization\_rulesets](#output\_organization\_rulesets) | Map of all organization rulesets created by this module |
 | <a name="output_organization_settings"></a> [organization\_settings](#output\_organization\_settings) | The organization settings resource |
 | <a name="output_repository_names"></a> [repository\_names](#output\_repository\_names) | Names of every repository in the organization, archived ones included.<br/><br/>Sourced from data.github\_organization, which builds its list from the<br/>paginated REST list-repos endpoint - unlike data.github\_repositories, which is<br/>backed by the Search API and both lags indexing and caps at 1000 results.<br/><br/>The data source returns "owner/repo"; the owner prefix is stripped here because<br/>consumers compare these against configuration that names repositories bare.<br/><br/>Archived repositories are included (ignore\_archived\_repos defaults to false),<br/>so archiving a repository cannot be used to hide it from a caller reconciling<br/>live state against configuration. |
